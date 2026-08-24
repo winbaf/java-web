@@ -1,0 +1,7 @@
+{
+    "java.compile.nullAnalysis.mode": "disabled",
+    "code-runner.runInTerminal": true,
+    "code-runner.executorMap": {
+        "java": "mvn spring-boot:run"
+    }
+}
