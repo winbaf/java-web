@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>商品管理</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f5f7fb;
+            color: #172033;
+            font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+
+        main {
+            width: min(960px, calc(100% - 32px));
+            margin: 32px auto;
+        }
+
+        h1 {
+            margin: 0 0 20px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .panel {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #d9e0ea;
+            border-radius: 8px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 14px;
+            color: #445064;
+        }
+
+        input {
+            width: 100%;
+            height: 40px;
+            padding: 0 10px;
+            border: 1px solid #c8d2df;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+            outline: 3px solid rgba(37, 99, 235, 0.15);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            height: 40px;
+            padding: 0 14px;
+            border: 0;
+            border-radius: 6px;
+            background: #2563eb;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        button.secondary {
+            background: #e5eaf2;
+            color: #172033;
+        }
+
+        button.danger {
+            background: #dc2626;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        .message {
+            min-height: 22px;
+            margin-top: 12px;
+            color: #166534;
+            font-size: 14px;
+        }
+
+        .message.error {
+            color: #b91c1c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e3e8ef;
+            text-align: left;
+        }
+
+        th {
+            color: #445064;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        td:last-child {
+            width: 170px;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .empty {
+            padding: 18px 0;
+            color: #667085;
+            text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-wrap: wrap;
+            }
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                padding: 12px 0;
+                border-bottom: 1px solid #e3e8ef;
+            }
+
+            td {
+                display: flex;
+                justify-content: space-between;
+                gap: 16px;
+                border-bottom: 0;
+            }
+
+            td::before {
+                content: attr(data-label);
+                color: #667085;
+                font-weight: 700;
+            }
+
+            td:last-child {
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>商品管理</h1>
+
+    <section class="panel">
+        <form id="product-form">
+            <input id="product-id" type="hidden">
+
+            <label>
+                商品名称
+                <input id="name" name="name" type="text" required placeholder="例如：Keyboard">
+            </label>
+
+            <label>
+                价格
+                <input id="price" name="price" type="number" min="0" step="0.01" required placeholder="199.99">
+            </label>
+
+            <label>
+                库存
+                <input id="stock" name="stock" type="number" min="0" step="1" required placeholder="5">
+            </label>
+
+            <div class="actions">
+                <button id="save-button" type="submit">新增商品</button>
+                <button class="secondary" id="cancel-button" type="button" hidden>取消编辑</button>
+            </div>
+        </form>
+        <div class="message" id="message"></div>
+    </section>
+
+    <section class="panel">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>商品名称</th>
+                <th>价格</th>
+                <th>库存</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody id="product-list"></tbody>
+        </table>
+        <div class="empty" id="empty-state" hidden>暂无商品，先新增一条。</div>
+    </section>
+</main>
+
+<script>
+    const apiUrl = "/products";
+    const form = document.querySelector("#product-form");
+    const productIdInput = document.querySelector("#product-id");
+    const nameInput = document.querySelector("#name");
+    const priceInput = document.querySelector("#price");
+    const stockInput = document.querySelector("#stock");
+    const saveButton = document.querySelector("#save-button");
+    const cancelButton = document.querySelector("#cancel-button");
+    const productList = document.querySelector("#product-list");
+    const emptyState = document.querySelector("#empty-state");
+    const message = document.querySelector("#message");
+
+    async function request(url, options = {}) {
+        const response = await fetch(url, {
+            headers: {
+                "Content-Type": "application/json",
+                ...options.headers
+            },
+            ...options
+        });
+
+        if (!response.ok) {
+            throw new Error(`请求失败：${response.status}`);
+        }
+
+        if (response.status === 204) {
+            return null;
+        }
+
+        return response.json();
+    }
+
+    function showMessage(text, isError = false) {
+        message.textContent = text;
+        message.classList.toggle("error", isError);
+    }
+
+    function resetForm() {
+        form.reset();
+        productIdInput.value = "";
+        saveButton.textContent = "新增商品";
+        cancelButton.hidden = true;
+        showMessage("");
+    }
+
+    function getFormProduct() {
+        return {
+            name: nameInput.value.trim(),
+            price: Number(priceInput.value),
+            stock: Number(stockInput.value)
+        };
+    }
+
+    function startEdit(product) {
+        productIdInput.value = product.id;
+        nameInput.value = product.name;
+        priceInput.value = product.price;
+        stockInput.value = product.stock;
+        saveButton.textContent = "保存修改";
+        cancelButton.hidden = false;
+        nameInput.focus();
+    }
+
+    async function loadProducts() {
+        const products = await request(apiUrl);
+        productList.innerHTML = "";
+        emptyState.hidden = products.length > 0;
+
+        for (const product of products) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td data-label="ID">${product.id}</td>
+                <td data-label="商品名称">${product.name}</td>
+                <td data-label="价格">${Number(product.price).toFixed(2)}</td>
+                <td data-label="库存">${product.stock}</td>
+                <td data-label="操作">
+                    <div class="row-actions">
+                        <button class="secondary" type="button" data-action="edit">编辑</button>
+                        <button class="danger" type="button" data-action="delete">删除</button>
+                    </div>
+                </td>
+            `;
+
+            row.querySelector('[data-action="edit"]').addEventListener("click", () => startEdit(product));
+            row.querySelector('[data-action="delete"]').addEventListener("click", async () => {
+                await request(`${apiUrl}/${product.id}`, {method: "DELETE"});
+                showMessage("删除成功");
+                resetForm();
+                await loadProducts();
+            });
+
+            productList.append(row);
+        }
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const product = getFormProduct();
+        const productId = productIdInput.value;
+        const method = productId ? "PUT" : "POST";
+        const url = productId ? `${apiUrl}/${productId}` : apiUrl;
+
+        try {
+            saveButton.disabled = true;
+            await request(url, {
+                method,
+                body: JSON.stringify(product)
+            });
+            showMessage(productId ? "修改成功" : "新增成功");
+            resetForm();
+            await loadProducts();
+        } catch (error) {
+            showMessage(error.message, true);
+        } finally {
+            saveButton.disabled = false;
+        }
+    });
+
+    cancelButton.addEventListener("click", resetForm);
+
+    loadProducts().catch((error) => showMessage(error.message, true));
+</script>
+</body>
+</html>

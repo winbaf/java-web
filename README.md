@@ -1,6 +1,6 @@
 # Hello Java Web
 
-一个使用 Java 21、Spring Boot 和 Maven 构建的最小 Web 项目。
+一个使用 Java 21、Spring Boot、Maven、Spring Data JPA 和 MySQL 构建的最小 CRUD Web 项目。
 
 ## 运行
 
@@ -13,6 +13,52 @@ mvn spring-boot:run
 ```text
 Hello Java Web!
 ```
+
+网页 CRUD 管理页面：
+
+```text
+http://localhost:8080/
+```
+
+CRUD 接口地址：
+
+```text
+GET    http://localhost:8080/products
+GET    http://localhost:8080/products/{id}
+POST   http://localhost:8080/products
+PUT    http://localhost:8080/products/{id}
+DELETE http://localhost:8080/products/{id}
+```
+
+新增商品示例：
+
+```bash
+curl -X POST http://localhost:8080/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Keyboard","price":199.99,"stock":5}'
+```
+
+## MySQL 配置
+
+项目默认连接本机 MySQL：
+
+```text
+Host: 127.0.0.1
+Port: 3306
+Database: hello_java_web
+User: root
+Password:
+```
+
+如果你的 MySQL 用户名或密码不同，可以在启动前设置环境变量：
+
+```bash
+export MYSQL_USER=你的用户名
+export MYSQL_PASSWORD=你的密码
+export MYSQL_DATABASE=hello_java_web
+```
+
+测试环境会自动使用 H2 内存数据库，不需要手动启动 MySQL。
 
 ## 在 VS Code 中运行
 
