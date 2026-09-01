@@ -2,6 +2,7 @@ package com.example.helloweb.controller;
 
 import com.example.helloweb.dto.auth.LoginRequest;
 import com.example.helloweb.dto.auth.LoginResponse;
+import com.example.helloweb.dto.auth.RegisterRequest;
 import com.example.helloweb.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,5 +26,12 @@ public class AuthController {
         return authService.login(request)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(401).build());
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return authService.register(request)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(409).build());
     }
 }
