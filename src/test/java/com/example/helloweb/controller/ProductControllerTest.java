@@ -1,5 +1,7 @@
-package com.example.helloweb.product;
+package com.example.helloweb.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,8 +25,13 @@ class ProductControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Test
     void supportsProductCrud() throws Exception {
+        String token = loginAndGetToken();
+
         String productJson = """
                 {
                   "name": "Keyboard",
@@ -34,6 +41,7 @@ class ProductControllerTest {
                 """;
 
         mockMvc.perform(post("/products")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(productJson))
                 .andExpect(status().isCreated())
@@ -44,6 +52,10 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.stock").value(5));
 
         mockMvc.perform(get("/products"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/products")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
 
@@ -56,6 +68,7 @@ class ProductControllerTest {
                 """;
 
         mockMvc.perform(put("/products/1")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatedProductJson))
                 .andExpect(status().isOk())
@@ -63,10 +76,31 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.price").value(99.5))
                 .andExpect(jsonPath("$.stock").value(8));
 
-        mockMvc.perform(delete("/products/1"))
+        mockMvc.perform(delete("/products/1")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/products/1"))
+        mockMvc.perform(get("/products/1")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    private String loginAndGetToken() throws Exception {
+        String response = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "admin",
+                                  "password": "admin123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode loginResponse = objectMapper.readTree(response);
+        return loginResponse.get("token").asText();
     }
 }

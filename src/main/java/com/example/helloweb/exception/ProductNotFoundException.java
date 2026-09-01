@@ -1,4 +1,4 @@
-package com.example.helloweb.product;
+package com.example.helloweb.exception;
 
 public class ProductNotFoundException extends RuntimeException {
 

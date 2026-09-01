@@ -20,6 +20,15 @@ Hello Java Web!
 http://localhost:8080/
 ```
 
+默认登录账号：
+
+```text
+用户名：admin
+密码：admin123
+```
+
+登录后页面会自动携带 JWT 访问 CRUD 接口。
+
 CRUD 接口地址：
 
 ```text
@@ -33,7 +42,13 @@ DELETE http://localhost:8080/products/{id}
 新增商品示例：
 
 ```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}' \
+  | sed -E 's/.*"token":"([^"]+)".*/\1/')
+
 curl -X POST http://localhost:8080/products \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Keyboard","price":199.99,"stock":5}'
 ```
@@ -56,6 +71,15 @@ Password:
 export MYSQL_USER=你的用户名
 export MYSQL_PASSWORD=你的密码
 export MYSQL_DATABASE=hello_java_web
+```
+
+JWT 登录账号和密钥也可以通过环境变量修改：
+
+```bash
+export APP_AUTH_USERNAME=admin
+export APP_AUTH_PASSWORD=admin123
+export APP_JWT_SECRET=请换成至少32位的随机字符串
+export APP_JWT_EXPIRATION_SECONDS=3600
 ```
 
 测试环境会自动使用 H2 内存数据库，不需要手动启动 MySQL。

@@ -3,5 +3,6 @@
     "code-runner.runInTerminal": true,
     "code-runner.executorMap": {
         "java": "mvn spring-boot:run"
-    }
+    },
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

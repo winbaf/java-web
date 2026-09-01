@@ -1,5 +1,8 @@
-package com.example.helloweb.product;
+package com.example.helloweb.service;
 
+import com.example.helloweb.entity.Product;
+import com.example.helloweb.exception.ProductNotFoundException;
+import com.example.helloweb.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

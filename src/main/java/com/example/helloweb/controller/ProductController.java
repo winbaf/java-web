@@ -1,9 +1,10 @@
-package com.example.helloweb.product;
+package com.example.helloweb.controller;
 
+import com.example.helloweb.entity.Product;
+import com.example.helloweb.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,10 +53,5 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<Void> handleProductNotFound() {
-        return ResponseEntity.notFound().build();
     }
 }

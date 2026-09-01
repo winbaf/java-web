@@ -1,4 +1,4 @@
-package com.example.helloweb.product;
+package com.example.helloweb.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
